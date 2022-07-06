@@ -15,56 +15,56 @@ task subsetGDSchr {
 	command <<<
 		echo "Writing R script to local file"
 		cat > subsetgdsfile.R << EOF
-args = commandArgs(trailingOnly=TRUE)
-gds_filename <- args[1]
-variants_filename <- args[2]
+		args = commandArgs(trailingOnly=TRUE)
+		gds_filename <- args[1]
+		variants_filename <- args[2]
 
 
-# Install SeqArray if needed
+		# Install SeqArray if needed
 
-if("SeqArray" %in% rownames(installed.packages()) == FALSE) {
-	if (!requireNamespace("BiocManager", quietly=TRUE))
-    install.packages("BiocManager")
-	BiocManager::install("SeqArray")
-}
+		if("SeqArray" %in% rownames(installed.packages()) == FALSE) {
+			if (!requireNamespace("BiocManager", quietly=TRUE))
+    			install.packages("BiocManager")
+			BiocManager::install("SeqArray")
+		}
 
-# Load libraries
-library(SeqArray)
-
-
-# Read in files
-system(paste("cp", gds_filename, "."))
-variants_file <- read.csv(variants_filename, header = T)
-gds_file <- seqOpen(basename(gds_filename), readonly = F)
+		# Load libraries
+		library(SeqArray)
 
 
-# Get variants that need to be extracted 
-colnames(variants_file) <- tolower(colnames(variants_file))
-colnames(variants_file) <- gsub("x...", "", colnames(variants_file))
-if("id" %in% colnames(variants_file)) {
-	snps_include <- variants_file[,"id"]
-} else {
-	snps_include <- paste(variants_file[,"chr"],variants_file[,"pos"],variants_file[,"ref"], variants_file[,"alt"], sep = "_")
-}
+		# Read in files
+		system(paste("cp", gds_filename, "."))
+		variants_file <- read.csv(variants_filename, header = T)
+		gds_file <- seqOpen(basename(gds_filename), readonly = F)
 
-# Get chromosome, position, alleles from GDS
-chromosome <- seqGetData(gds_file, "chromosome")
-position <- seqGetData(gds_file, "position")
-allele <- seqGetData(gds_file, "allele")
 
-# Split alleles variable to be ref and alt
-ref <- sub(",.*$", "", allele)
-alt <- sub("^.*,", "", allele)
+		# Get variants that need to be extracted 
+		colnames(variants_file) <- tolower(colnames(variants_file))
+		colnames(variants_file) <- gsub("x...", "", colnames(variants_file))
+		if("id" %in% colnames(variants_file)) {
+			snps_include <- variants_file[,"id"]
+		} else {
+			snps_include <- paste(variants_file[,"chr"],variants_file[,"pos"],variants_file[,"ref"], variants_file[,"alt"], sep = "_")
+		}
 
-# Add variant ID column
-seqAddValue(gds_file, "variant.id", paste(chromosome, position, ref, alt, sep = "_"), replace = T)
+		# Get chromosome, position, alleles from GDS
+		chromosome <- seqGetData(gds_file, "chromosome")
+		position <- seqGetData(gds_file, "position")
+		allele <- seqGetData(gds_file, "allele")
 
-# Filter to the variants 
-seqSetFilter(gds_file, variant.id=snps_include)
+		# Split alleles variable to be ref and alt
+		ref <- sub(",.*$", "", allele)
+		alt <- sub("^.*,", "", allele)
 
-# Export file name
-subfile <- paste(sub("\\.gds", "", basename(gds_filename)), "subset", "gds", sep = ".")
-seqExport(gds_file, subfile)
+		# Add variant ID column
+		seqAddValue(gds_file, "variant.id", paste(chromosome, position, ref, alt, sep = "_"), replace = T)
+
+		# Filter to the variants 
+		seqSetFilter(gds_file, variant.id=snps_include)
+
+		# Export file name
+		subfile <- paste(sub("\\.gds", "", basename(gds_filename)), "subset", "gds", sep = ".")
+		seqExport(gds_file, subfile)
 		EOF
 		
 		
