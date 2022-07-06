@@ -1,7 +1,7 @@
 version: 1.2
 workflows:
   - subclass: WDL
-    primaryDescriptorPath: manning-lab/subset-gds
+    primaryDescriptorPath: subset-gds.wdl
     authors:
       - name: Sarah Hsu
         email: shsu@broadinstitute.org
